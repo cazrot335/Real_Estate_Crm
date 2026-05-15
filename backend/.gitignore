@@ -1,0 +1,35 @@
+# Environment Variables
+.env
+
+# .NET / C#
+bin/
+obj/
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+[Dd]ebug/
+[Rr]elease/
+
+# Visual Studio / VS Code
+.vscode/
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# macOS
+.DS_Store
+
+# Temporary files
+*.swp
+*.*~
+project.lock.json
+.DS_Store
+*.pyc
+
+
+
+# Local JSON files containing mock data (optional, but good if you don't want to commit fake users)
+users.json
+
+

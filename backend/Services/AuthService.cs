@@ -1,64 +1,79 @@
+using backend.Data;
+using backend.Models;
+using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
-using backend.Models;
-using System.Text.Json;
 
 namespace backend.Services;
 
 public class AuthService
 {
-    private readonly string _filePath;
+    private readonly AppDbContext _context;
     private readonly string _jwtKey;
 
-    public AuthService(IWebHostEnvironment env)
+    public AuthService(AppDbContext context)
     {
-        _filePath = Path.Combine(env.ContentRootPath, "users.json");
+        _context = context;
         _jwtKey = Environment.GetEnvironmentVariable("JWT_SECRET") ?? "SUPER_SECRET_KEY_12345";
     }
 
-    // 🔐 Register with hashing
+    // Register (Viewer)
     public async Task<(bool Success, string Message)> RegisterUserAsync(RegisterRequest request)
     {
-        var users = await ReadUsers();
-
-        if (users.Any(u => u.Email == request.Email))
+        if (await _context.Users.AnyAsync(u => u.Email == request.Email))
             return (false, "User already exists");
 
-        users.Add(new User
+        var user = new User
         {
             Email = request.Email,
-            Password = BCrypt.Net.BCrypt.HashPassword(request.Password)
-        });
+            Password = BCrypt.Net.BCrypt.HashPassword(request.Password),
+            Role = "Viewer"
+        };
 
-        await SaveUsers(users);
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync();
 
         return (true, "User registered successfully");
     }
 
-    // 🔑 Login with password check + JWT
-    public async Task<(bool Success, string Token, string Message)> LoginAsync(LoginRequest request)
+    // Login
+    public async Task<(bool Success, User? User, string Message)> LoginAsync(LoginRequest request)
     {
-        var users = await ReadUsers();
-
-        var user = users.FirstOrDefault(u => u.Email == request.Email);
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
 
         if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.Password))
-            return (false, "", "Invalid credentials");
+            return (false, null, "Invalid credentials");
 
-        var token = GenerateJwtToken(user);
-
-        return (true, token, "Login successful");
+        return (true, user, "Login successful");
     }
 
-    // 🎟️ JWT generator
-    private string GenerateJwtToken(User user)
+    // Admin creates agent
+    public async Task<(bool Success, string Message)> CreateAgentAsync(CreateAgentRequest request)
+    {
+        if (await _context.Users.AnyAsync(u => u.Email == request.Email))
+            return (false, "User already exists");
+
+        var user = new User
+        {
+            Email = request.Email,
+            Password = BCrypt.Net.BCrypt.HashPassword(request.Password),
+            Role = "Agent"
+        };
+
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync();
+
+        return (true, "Agent created successfully");
+    }
+
+    public string GenerateJwtToken(User user)
     {
         var claims = new[]
         {
             new Claim(ClaimTypes.Name, user.Email),
-            new Claim(ClaimTypes.Role, "User") // future RBAC
+            new Claim(ClaimTypes.Role, user.Role)
         };
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtKey));
@@ -71,24 +86,5 @@ public class AuthService
         );
 
         return new JwtSecurityTokenHandler().WriteToken(token);
-    }
-
-    // 📦 Helpers
-    private async Task<List<User>> ReadUsers()
-    {
-        if (!File.Exists(_filePath))
-            return new List<User>();
-
-        var json = await File.ReadAllTextAsync(_filePath);
-
-        return JsonSerializer.Deserialize<List<User>>(json,
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
-            ?? new List<User>();
-    }
-
-    private async Task SaveUsers(List<User> users)
-    {
-        var json = JsonSerializer.Serialize(users, new JsonSerializerOptions { WriteIndented = true });
-        await File.WriteAllTextAsync(_filePath, json);
     }
 }

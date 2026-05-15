@@ -1,14 +1,20 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.OpenApi.Models;
 
 using backend.Services;
+using backend.Data;
+using Microsoft.EntityFrameworkCore;
 
 // Load .env file variables
 DotNetEnv.Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql("Host=localhost;Port=5432;Database=rbacdb;Username=postgres;Password=P@rth990"));
 
 // Read from Configuration or directly from Environment
 var key = builder.Configuration["JWT_SECRET"] ?? Environment.GetEnvironmentVariable("JWT_SECRET");
@@ -89,6 +95,19 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.MapGet("/api/secure", () => "This is protected data")
+   .RequireAuthorization();
+
+
+// Admin only
+app.MapGet("/api/admin", () => "Admin data")
+   .RequireAuthorization(new AuthorizeAttribute { Roles = "Admin" });
+
+// Agent + Admin
+app.MapGet("/api/agent", () => "Agent data")
+   .RequireAuthorization(new AuthorizeAttribute { Roles = "Admin,Agent" });
+
+// Viewer + all
+app.MapGet("/api/view", () => "Viewer data")
    .RequireAuthorization();
 
 app.Run();

@@ -1,3 +1,0 @@
-Add register API (write to JSON)
-Add JWT token auth
-Design RBAC roles + permissions system properly

@@ -1,2 +1,6 @@
 # Real_Estate_Crm
-learning .net framework 
+
+learning .net framework
+
+rm -rf bin obj
+dotnet restore

@@ -110,4 +110,8 @@ app.MapGet("/api/agent", () => "Agent data")
 app.MapGet("/api/view", () => "Viewer data")
    .RequireAuthorization();
 
+app.MapPost("/api/lead", () => "Create lead")
+   .RequireAuthorization(policy =>
+       policy.RequireClaim("permission", "create_lead"));   
+
 app.Run();

@@ -24,12 +24,10 @@ public async Task<IActionResult> Login(LoginRequest request)
     if (!result.Success)
         return Unauthorized(result.Message);
 
-    var token = _authService.GenerateJwtToken(result.User);
-
     return Ok(new
     {
-        token,
-        role = result.User.Role
+        token = result.Token,
+        message = result.Message
     });
 }
 
@@ -44,8 +42,8 @@ public async Task<IActionResult> Register(RegisterRequest request)
     return Ok(result.Message);
 }
 
-[HttpPost("create-agent")]
 [Authorize(Roles = "Admin")]
+[HttpPost("create-agent")]
 public async Task<IActionResult> CreateAgent(CreateAgentRequest request)
 {
     var result = await _authService.CreateAgentAsync(request);
@@ -54,5 +52,19 @@ public async Task<IActionResult> CreateAgent(CreateAgentRequest request)
         return BadRequest(result.Message);
 
     return Ok(result.Message);
+}
+
+[Authorize(Roles = "Admin,Agent")]
+[HttpGet("leads")]
+public IActionResult GetLeads()
+{
+    return Ok("Leads data");
+}
+
+[Authorize]
+[HttpGet("profile")]
+public IActionResult GetProfile()
+{
+    return Ok("User profile");
 }
 }

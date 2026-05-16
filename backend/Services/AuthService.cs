@@ -1,90 +1,129 @@
 using backend.Data;
 using backend.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Microsoft.IdentityModel.Tokens;
 
 namespace backend.Services;
 
 public class AuthService
 {
     private readonly AppDbContext _context;
-    private readonly string _jwtKey;
+    private readonly IConfiguration _config;
 
-    public AuthService(AppDbContext context)
+    public AuthService(AppDbContext context, IConfiguration config)
     {
         _context = context;
-        _jwtKey = Environment.GetEnvironmentVariable("JWT_SECRET") ?? "SUPER_SECRET_KEY_12345";
+        _config = config;
     }
 
-    // Register (Viewer)
+    // 🔐 REGISTER (Viewer)
     public async Task<(bool Success, string Message)> RegisterUserAsync(RegisterRequest request)
-    {
-        if (await _context.Users.AnyAsync(u => u.Email == request.Email))
-            return (false, "User already exists");
+{
+    if (await _context.Users.AnyAsync(u => u.Email == request.Email))
+        return (false, "User already exists");
 
-        var user = new User
+    // 👇 Fetch Viewer role
+    var viewerRole = await _context.Roles
+        .FirstAsync(r => r.Name == "Viewer");
+
+    var user = new User
+    {
+        Email = request.Email,
+        Password = BCrypt.Net.BCrypt.HashPassword(request.Password),
+        UserRoles = new List<UserRole>
         {
-            Email = request.Email,
-            Password = BCrypt.Net.BCrypt.HashPassword(request.Password),
-            Role = "Viewer"
-        };
+            new UserRole { RoleId = viewerRole.Id }
+        }
+    };
 
-        _context.Users.Add(user);
-        await _context.SaveChangesAsync();
+    _context.Users.Add(user);
+    await _context.SaveChangesAsync();
 
-        return (true, "User registered successfully");
-    }
+    return (true, "Viewer registered successfully");
+}
 
-    // Login
-    public async Task<(bool Success, User? User, string Message)> LoginAsync(LoginRequest request)
-    {
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+    // 🔑 LOGIN (JWT with roles + permissions)
+    public async Task<(bool Success, string Token, string Message)> LoginAsync(LoginRequest request)
+{
+    var user = await _context.Users
+        .Include(u => u.UserRoles)
+    .ThenInclude(ur => ur.Role)
+        .ThenInclude(r => r.RolePermissions)
+            .ThenInclude(rp => rp.Permission)
+        .FirstOrDefaultAsync(u => u.Email == request.Email);
 
-        if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.Password))
-            return (false, null, "Invalid credentials");
+    if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.Password))
+        return (false, "", "Invalid credentials");
 
-        return (true, user, "Login successful");
-    }
+    var token = GenerateJwtToken(user);
 
-    // Admin creates agent
+    return (true, token, "Login successful");
+}
+
+    // 👑 ADMIN: CREATE AGENT
     public async Task<(bool Success, string Message)> CreateAgentAsync(CreateAgentRequest request)
+{
+    if (await _context.Users.AnyAsync(u => u.Email == request.Email))
+        return (false, "User already exists");
+
+    // 👇 Fetch Agent role
+    var agentRole = await _context.Roles
+        .FirstAsync(r => r.Name == "Agent");
+
+    var user = new User
     {
-        if (await _context.Users.AnyAsync(u => u.Email == request.Email))
-            return (false, "User already exists");
-
-        var user = new User
+        Email = request.Email,
+        Password = BCrypt.Net.BCrypt.HashPassword(request.Password),
+        UserRoles = new List<UserRole>
         {
-            Email = request.Email,
-            Password = BCrypt.Net.BCrypt.HashPassword(request.Password),
-            Role = "Agent"
-        };
+            new UserRole { RoleId = agentRole.Id }
+        }
+    };
 
-        _context.Users.Add(user);
-        await _context.SaveChangesAsync();
+    _context.Users.Add(user);
+    await _context.SaveChangesAsync();
 
-        return (true, "Agent created successfully");
-    }
+    return (true, "Agent created successfully");
+}
 
-    public string GenerateJwtToken(User user)
+    // 🎟️ GENERATE JWT TOKEN
+    private string GenerateJwtToken(User user)
+{
+    var key = _config["JWT_SECRET"];
+
+    var claims = new List<Claim>
     {
-        var claims = new[]
-        {
-            new Claim(ClaimTypes.Name, user.Email),
-            new Claim(ClaimTypes.Role, user.Role)
-        };
+        new Claim(ClaimTypes.Name, user.Email)
+    };
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtKey));
-        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+    // 👇 Extract roles
+    var roles = user.UserRoles.Select(ur => ur.Role.Name).ToList();
 
-        var token = new JwtSecurityToken(
-            claims: claims,
-            expires: DateTime.Now.AddHours(1),
-            signingCredentials: creds
-        );
+    // Extract permissions
+    var permissions = user.UserRoles
+    .SelectMany(ur => ur.Role.RolePermissions)
+    .Select(rp => rp.Permission.Name)
+    .Distinct()
+    .ToList();
 
-        return new JwtSecurityTokenHandler().WriteToken(token);
-    }
+    // Add to claims
+    claims.AddRange(permissions.Select(p => new Claim("permission", p)));
+
+    // 👇 Add roles to token
+    claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
+
+    var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
+    var creds = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+    var token = new JwtSecurityToken(
+        claims: claims,
+        expires: DateTime.Now.AddHours(2),
+        signingCredentials: creds
+    );
+
+    return new JwtSecurityTokenHandler().WriteToken(token);
+}
 }

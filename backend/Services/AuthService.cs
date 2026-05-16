@@ -50,9 +50,9 @@ public class AuthService
 {
     var user = await _context.Users
         .Include(u => u.UserRoles)
-    .ThenInclude(ur => ur.Role)
-        .ThenInclude(r => r.RolePermissions)
-            .ThenInclude(rp => rp.Permission)
+            .ThenInclude(ur => ur.Role)
+                .ThenInclude(r => r.RolePermissions)
+                    .ThenInclude(rp => rp.Permission)
         .FirstOrDefaultAsync(u => u.Email == request.Email);
 
     if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.Password))
@@ -101,19 +101,16 @@ public class AuthService
 
     // 👇 Extract roles
     var roles = user.UserRoles.Select(ur => ur.Role.Name).ToList();
+    claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
     // Extract permissions
     var permissions = user.UserRoles
-    .SelectMany(ur => ur.Role.RolePermissions)
-    .Select(rp => rp.Permission.Name)
-    .Distinct()
-    .ToList();
+        .SelectMany(ur => ur.Role.RolePermissions)
+        .Select(rp => rp.Permission.Name)
+        .Distinct()
+        .ToList();
 
-    // Add to claims
     claims.AddRange(permissions.Select(p => new Claim("permission", p)));
-
-    // 👇 Add roles to token
-    claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
     var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
     var creds = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
@@ -125,5 +122,84 @@ public class AuthService
     );
 
     return new JwtSecurityTokenHandler().WriteToken(token);
+}
+
+// 🔄 ASSIGN ROLE TO USER
+public async Task<(bool Success, string Message)> AssignRoleToUserAsync(AssignRoleRequest request)
+{
+    var userExists = await _context.Users.AnyAsync(u => u.Id == request.UserId);
+    var roleExists = await _context.Roles.AnyAsync(r => r.Id == request.RoleId);
+
+    if (!userExists || !roleExists)
+        return (false, "User or Role not found");
+
+    var alreadyAssigned = await _context.UserRoles
+        .AnyAsync(ur => ur.UserId == request.UserId && ur.RoleId == request.RoleId);
+
+    if (alreadyAssigned)
+        return (false, "Role already assigned");
+
+    _context.UserRoles.Add(new UserRole
+    {
+        UserId = request.UserId,
+        RoleId = request.RoleId
+    });
+
+    await _context.SaveChangesAsync();
+
+    return (true, "Role assigned successfully");
+}
+
+// 🔑 ADMIN: ASSIGN PERMISSION
+public async Task<(bool Success, string Message)> AssignPermissionToRoleAsync(AssignPermissionRequest request)
+{
+    var roleExists = await _context.Roles.AnyAsync(r => r.Id == request.RoleId);
+    var permExists = await _context.Permissions.AnyAsync(p => p.Id == request.PermissionId);
+
+    if (!roleExists || !permExists)
+        return (false, "Role or Permission not found");
+
+    var alreadyAssigned = await _context.RolePermissions
+        .AnyAsync(rp => rp.RoleId == request.RoleId && rp.PermissionId == request.PermissionId);
+
+    if (alreadyAssigned)
+        return (false, "Permission already assigned");
+
+    _context.RolePermissions.Add(new RolePermission
+    {
+        RoleId = request.RoleId,
+        PermissionId = request.PermissionId
+    });
+
+    await _context.SaveChangesAsync();
+
+    return (true, "Permission assigned successfully");
+}
+
+// 📝 ADMIN: GET ALL USERS
+public async Task<List<object>> GetUsersAsync()
+{
+    return await _context.Users
+        .Include(u => u.UserRoles)
+            .ThenInclude(ur => ur.Role)
+        .Select(u => new
+        {
+            u.Id,
+            u.Email,
+            Roles = u.UserRoles.Select(ur => ur.Role.Name)
+        })
+        .ToListAsync<object>();
+}
+
+// 📋 ADMIN: GET ALL ROLES
+public async Task<List<Role>> GetRolesAsync()
+{
+    return await _context.Roles.ToListAsync();
+}
+
+// 📋 ADMIN: GET ALL PERMISSIONS
+public async Task<List<Permission>> GetPermissionsAsync()
+{
+    return await _context.Permissions.ToListAsync();
 }
 }

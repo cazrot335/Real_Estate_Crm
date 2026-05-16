@@ -12,6 +12,7 @@ public class AppDbContext : DbContext
     public DbSet<UserRole> UserRoles { get; set; }
     public DbSet<Permission> Permissions { get; set; }
     public DbSet<RolePermission> RolePermissions { get; set; }
+    public DbSet<Lead> Leads { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -31,25 +32,28 @@ public class AppDbContext : DbContext
         );
 
         modelBuilder.Entity<Permission>().HasData(
-    new Permission { Id = 1, Name = "create_agent" },
-    new Permission { Id = 2, Name = "view_leads" },
-    new Permission { Id = 3, Name = "create_lead" }
-);
+            new Permission { Id = 1, Name = "create_lead" },
+            new Permission { Id = 2, Name = "assign_lead" },
+            new Permission { Id = 3, Name = "view_lead" },
+            new Permission { Id = 4, Name = "update_lead_status" }
+        );
 
 
-modelBuilder.Entity<RolePermission>().HasData(
-    // Admin → all permissions
-    new RolePermission { RoleId = 1, PermissionId = 1 },
-    new RolePermission { RoleId = 1, PermissionId = 2 },
-    new RolePermission { RoleId = 1, PermissionId = 3 },
+        modelBuilder.Entity<RolePermission>().HasData(
+            // Admin → ALL
+            new RolePermission { RoleId = 1, PermissionId = 1 },
+            new RolePermission { RoleId = 1, PermissionId = 2 },
+            new RolePermission { RoleId = 1, PermissionId = 3 },
+            new RolePermission { RoleId = 1, PermissionId = 4 },
 
-    // Agent
-    new RolePermission { RoleId = 2, PermissionId = 2 },
-    new RolePermission { RoleId = 2, PermissionId = 3 },
+            // Agent → create_lead, view_lead, update_lead_status
+            new RolePermission { RoleId = 2, PermissionId = 1 },
+            new RolePermission { RoleId = 2, PermissionId = 3 },
+            new RolePermission { RoleId = 2, PermissionId = 4 },
 
-    // Viewer
-    new RolePermission { RoleId = 3, PermissionId = 2 }
-);
+            // Viewer → view_lead
+            new RolePermission { RoleId = 3, PermissionId = 3 }
+        );
 
            
     }

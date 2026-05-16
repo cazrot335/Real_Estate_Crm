@@ -78,11 +78,17 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("assign_lead", policy => policy.RequireClaim("permission", "assign_lead"));
     options.AddPolicy("view_lead", policy => policy.RequireClaim("permission", "view_lead"));
     options.AddPolicy("update_lead_status", policy => policy.RequireClaim("permission", "update_lead_status"));
+
+    options.AddPolicy("create_property", policy => policy.RequireClaim("permission", "create_property"));
+    options.AddPolicy("assign_property", policy => policy.RequireClaim("permission", "assign_property"));
+    options.AddPolicy("view_property", policy => policy.RequireClaim("permission", "view_property"));
+    options.AddPolicy("update_property_status", policy => policy.RequireClaim("permission", "update_property_status"));
 });
 
 // Dependency Injection
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<LeadService>();
+builder.Services.AddScoped<PropertyService>();
 
 var app = builder.Build();
 

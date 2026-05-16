@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using backend.Data;
@@ -11,9 +12,11 @@ using backend.Data;
 namespace backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260516061349_AddProperties")]
+    partial class AddProperties
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -91,26 +94,6 @@ namespace backend.Migrations
                         {
                             Id = 4,
                             Name = "update_lead_status"
-                        },
-                        new
-                        {
-                            Id = 5,
-                            Name = "create_property"
-                        },
-                        new
-                        {
-                            Id = 6,
-                            Name = "assign_property"
-                        },
-                        new
-                        {
-                            Id = 7,
-                            Name = "view_property"
-                        },
-                        new
-                        {
-                            Id = 8,
-                            Name = "update_property_status"
                         });
                 });
 
@@ -221,26 +204,6 @@ namespace backend.Migrations
                         },
                         new
                         {
-                            RoleId = 1,
-                            PermissionId = 5
-                        },
-                        new
-                        {
-                            RoleId = 1,
-                            PermissionId = 6
-                        },
-                        new
-                        {
-                            RoleId = 1,
-                            PermissionId = 7
-                        },
-                        new
-                        {
-                            RoleId = 1,
-                            PermissionId = 8
-                        },
-                        new
-                        {
                             RoleId = 2,
                             PermissionId = 1
                         },
@@ -256,28 +219,8 @@ namespace backend.Migrations
                         },
                         new
                         {
-                            RoleId = 2,
-                            PermissionId = 5
-                        },
-                        new
-                        {
-                            RoleId = 2,
-                            PermissionId = 7
-                        },
-                        new
-                        {
-                            RoleId = 2,
-                            PermissionId = 8
-                        },
-                        new
-                        {
                             RoleId = 3,
                             PermissionId = 3
-                        },
-                        new
-                        {
-                            RoleId = 3,
-                            PermissionId = 7
                         });
                 });
 

@@ -83,12 +83,27 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("assign_property", policy => policy.RequireClaim("permission", "assign_property"));
     options.AddPolicy("view_property", policy => policy.RequireClaim("permission", "view_property"));
     options.AddPolicy("update_property_status", policy => policy.RequireClaim("permission", "update_property_status"));
+
+    options.AddPolicy("create_deal", policy => policy.RequireClaim("permission", "create_deal"));
+    options.AddPolicy("view_deal", policy => policy.RequireClaim("permission", "view_deal"));
+    options.AddPolicy("update_deal_status", policy => policy.RequireClaim("permission", "update_deal_status"));
+
+    options.AddPolicy("create_task", policy => policy.RequireClaim("permission", "create_task"));
+    options.AddPolicy("view_task", policy => policy.RequireClaim("permission", "view_task"));
+    options.AddPolicy("update_task_status", policy => policy.RequireClaim("permission", "update_task_status"));
+    options.AddPolicy("assign_task", policy => policy.RequireClaim("permission", "assign_task"));
+
+    options.AddPolicy("view_reports", policy => policy.RequireClaim("permission", "view_reports"));
+    options.AddPolicy("view_agent_performance", policy => policy.RequireClaim("permission", "view_agent_performance"));
 });
 
 // Dependency Injection
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<LeadService>();
 builder.Services.AddScoped<PropertyService>();
+builder.Services.AddScoped<DealService>();
+builder.Services.AddScoped<TaskService>();
+builder.Services.AddScoped<ReportService>();
 
 var app = builder.Build();
 

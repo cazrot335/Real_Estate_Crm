@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using backend.Data;
@@ -11,9 +12,11 @@ using backend.Data;
 namespace backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260517020018_AddTasks")]
+    partial class AddTasks
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -164,36 +167,6 @@ namespace backend.Migrations
                         {
                             Id = 11,
                             Name = "update_deal_status"
-                        },
-                        new
-                        {
-                            Id = 12,
-                            Name = "create_task"
-                        },
-                        new
-                        {
-                            Id = 13,
-                            Name = "view_task"
-                        },
-                        new
-                        {
-                            Id = 14,
-                            Name = "update_task_status"
-                        },
-                        new
-                        {
-                            Id = 15,
-                            Name = "assign_task"
-                        },
-                        new
-                        {
-                            Id = 16,
-                            Name = "view_reports"
-                        },
-                        new
-                        {
-                            Id = 17,
-                            Name = "view_agent_performance"
                         });
                 });
 
@@ -339,36 +312,6 @@ namespace backend.Migrations
                         },
                         new
                         {
-                            RoleId = 1,
-                            PermissionId = 12
-                        },
-                        new
-                        {
-                            RoleId = 1,
-                            PermissionId = 13
-                        },
-                        new
-                        {
-                            RoleId = 1,
-                            PermissionId = 14
-                        },
-                        new
-                        {
-                            RoleId = 1,
-                            PermissionId = 15
-                        },
-                        new
-                        {
-                            RoleId = 1,
-                            PermissionId = 16
-                        },
-                        new
-                        {
-                            RoleId = 1,
-                            PermissionId = 17
-                        },
-                        new
-                        {
                             RoleId = 2,
                             PermissionId = 1
                         },
@@ -414,26 +357,6 @@ namespace backend.Migrations
                         },
                         new
                         {
-                            RoleId = 2,
-                            PermissionId = 12
-                        },
-                        new
-                        {
-                            RoleId = 2,
-                            PermissionId = 13
-                        },
-                        new
-                        {
-                            RoleId = 2,
-                            PermissionId = 14
-                        },
-                        new
-                        {
-                            RoleId = 2,
-                            PermissionId = 16
-                        },
-                        new
-                        {
                             RoleId = 3,
                             PermissionId = 3
                         },
@@ -446,16 +369,6 @@ namespace backend.Migrations
                         {
                             RoleId = 3,
                             PermissionId = 10
-                        },
-                        new
-                        {
-                            RoleId = 3,
-                            PermissionId = 13
-                        },
-                        new
-                        {
-                            RoleId = 3,
-                            PermissionId = 16
                         });
                 });
 

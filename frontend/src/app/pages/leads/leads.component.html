@@ -1,0 +1,132 @@
+<div class="p-8 max-w-7xl mx-auto">
+
+  <!-- Header -->
+  <div class="flex items-start justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Leads</h1>
+      <p class="text-gray-500 text-sm mt-1">Manage and track your sales leads</p>
+    </div>
+    @if (canCreate) {
+      <button (click)="showCreate.set(!showCreate())"
+        class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        New Lead
+      </button>
+    }
+  </div>
+
+  <!-- Toast -->
+  @if (toast()) {
+    <div class="mb-4 p-3 rounded-lg text-sm flex items-center gap-2"
+      [class]="toastType() === 'success' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'">
+      {{ toast() }}
+    </div>
+  }
+
+  <!-- Create form -->
+  @if (showCreate()) {
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-6">
+      <h3 class="font-semibold text-gray-800 mb-4">New Lead</h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <input type="text" [(ngModel)]="newLead.name" placeholder="Full name"
+          class="px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
+        <input type="tel" [(ngModel)]="newLead.phone" placeholder="Phone number"
+          class="px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
+      </div>
+      <div class="mt-3 flex gap-2">
+        <button (click)="create()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors">Create</button>
+        <button (click)="showCreate.set(false)" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-medium rounded-lg transition-colors">Cancel</button>
+      </div>
+    </div>
+  }
+
+  <!-- Action panels -->
+  @if (canAssign || canStatus) {
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+
+      @if (canAssign) {
+        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+          <h3 class="text-sm font-semibold text-gray-700 mb-3">Assign Lead to Agent</h3>
+          <div class="space-y-2">
+            <select [(ngModel)]="assignForm.leadId"
+              class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+              <option [value]="0">Select lead</option>
+              @for (l of leads(); track l.id) {
+                <option [value]="l.id">{{ l.name }} — {{ l.phone }}</option>
+              }
+            </select>
+            <select [(ngModel)]="assignForm.agentId"
+              class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+              <option [value]="0">Select agent</option>
+              @for (u of users(); track u.id) {
+                <option [value]="u.id">{{ u.email }}</option>
+              }
+            </select>
+            <button (click)="assign()" class="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors">Assign</button>
+          </div>
+        </div>
+      }
+
+      @if (canStatus) {
+        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+          <h3 class="text-sm font-semibold text-gray-700 mb-3">Update Lead Status</h3>
+          <div class="space-y-2">
+            <select [(ngModel)]="statusForm.leadId"
+              class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+              <option [value]="0">Select lead</option>
+              @for (l of leads(); track l.id) {
+                <option [value]="l.id">{{ l.name }}</option>
+              }
+            </select>
+            <select [(ngModel)]="statusForm.status"
+              class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="">Select status</option>
+              @for (s of statuses; track s) {
+                <option [value]="s">{{ s }}</option>
+              }
+            </select>
+            <button (click)="updateStatus()" class="w-full py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors">Update Status</button>
+          </div>
+        </div>
+      }
+
+    </div>
+  }
+
+  <!-- Table -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    @if (loading()) {
+      <div class="p-10 text-center text-gray-400 text-sm">Loading leads...</div>
+    } @else if (leads().length === 0) {
+      <div class="p-10 text-center text-gray-400 text-sm">No leads found.</div>
+    } @else {
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-100">
+          <tr class="text-left text-gray-500">
+            <th class="px-6 py-3 font-medium">Name</th>
+            <th class="px-6 py-3 font-medium">Phone</th>
+            <th class="px-6 py-3 font-medium">Status</th>
+            <th class="px-6 py-3 font-medium">Created</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+          @for (lead of leads(); track lead.id) {
+            <tr class="hover:bg-gray-50 transition-colors">
+              <td class="px-6 py-3.5 font-medium text-gray-800">{{ lead.name }}</td>
+              <td class="px-6 py-3.5 text-gray-600">{{ lead.phone }}</td>
+              <td class="px-6 py-3.5">
+                <span class="px-2.5 py-1 rounded-full text-xs font-medium" [class]="statusClass(lead.status)">
+                  {{ lead.status }}
+                </span>
+              </td>
+              <td class="px-6 py-3.5 text-gray-400">{{ lead.createdAt | date:'mediumDate' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+
+</div>

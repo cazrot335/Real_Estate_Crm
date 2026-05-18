@@ -1,0 +1,139 @@
+<div class="p-8 max-w-7xl mx-auto">
+
+  <!-- Header -->
+  <div class="mb-8">
+    <h1 class="text-2xl font-bold text-gray-900">Dashboard</h1>
+    <p class="text-gray-500 text-sm mt-1">Welcome back, <span class="font-medium text-gray-700">{{ email }}</span></p>
+  </div>
+
+  <!-- Stats grid -->
+  @if (summary()) {
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+
+      @if (summary()!.totalLeads !== undefined) {
+        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-sm text-gray-500">Total Leads</span>
+            <span class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center">
+              <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+            </span>
+          </div>
+          <p class="text-3xl font-bold text-gray-900">{{ summary()!.totalLeads }}</p>
+          @if (summary()!.convertedLeads !== undefined) {
+            <p class="text-xs text-gray-400 mt-1">{{ summary()!.convertedLeads }} converted</p>
+          }
+        </div>
+      }
+
+      @if (summary()!.totalDeals !== undefined) {
+        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-sm text-gray-500">Total Deals</span>
+            <span class="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center">
+              <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </span>
+          </div>
+          <p class="text-3xl font-bold text-gray-900">{{ summary()!.totalDeals }}</p>
+          @if (summary()!.closedDeals !== undefined) {
+            <p class="text-xs text-gray-400 mt-1">{{ summary()!.closedDeals }} closed</p>
+          }
+        </div>
+      }
+
+      @if (summary()!.totalRevenue !== undefined) {
+        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-sm text-gray-500">Revenue</span>
+            <span class="w-8 h-8 rounded-lg bg-yellow-50 flex items-center justify-center">
+              <svg class="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </span>
+          </div>
+          <p class="text-2xl font-bold text-gray-900">₹{{ summary()!.totalRevenue! | number }}</p>
+          <p class="text-xs text-gray-400 mt-1">from closed deals</p>
+        </div>
+      }
+
+      @if (conversion()) {
+        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-sm text-gray-500">Conversion</span>
+            <span class="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center">
+              <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+              </svg>
+            </span>
+          </div>
+          <p class="text-3xl font-bold text-gray-900">{{ conversion()!.conversionRate | number:'1.0-1' }}%</p>
+          <p class="text-xs text-gray-400 mt-1">lead conversion rate</p>
+        </div>
+      }
+
+    </div>
+  }
+
+  <!-- Conversion progress bar -->
+  @if (conversion()) {
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-6">
+      <h2 class="text-sm font-semibold text-gray-700 mb-4">Lead Conversion Progress</h2>
+      <div class="flex items-center gap-4">
+        <div class="flex-1 bg-gray-100 rounded-full h-2.5 overflow-hidden">
+          <div class="bg-indigo-500 h-full rounded-full transition-all duration-500"
+            [style.width.%]="conversion()!.conversionRate"></div>
+        </div>
+        <span class="text-sm font-semibold text-indigo-600 w-12 text-right">
+          {{ conversion()!.conversionRate | number:'1.0-1' }}%
+        </span>
+      </div>
+      <p class="text-xs text-gray-400 mt-2">
+        {{ conversion()!.convertedLeads }} of {{ conversion()!.totalLeads }} leads converted
+      </p>
+    </div>
+  }
+
+  <!-- Agent performance table -->
+  @if (agentPerf().length > 0) {
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-100">
+        <h2 class="text-sm font-semibold text-gray-700">Agent Performance</h2>
+      </div>
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50">
+          <tr class="text-left text-gray-500">
+            <th class="px-6 py-3 font-medium">Agent</th>
+            <th class="px-6 py-3 font-medium">Deals Closed</th>
+            <th class="px-6 py-3 font-medium">Revenue</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+          @for (a of agentPerf(); track a.agent) {
+            <tr class="hover:bg-gray-50">
+              <td class="px-6 py-3.5 text-gray-800 font-medium">{{ a.agent }}</td>
+              <td class="px-6 py-3.5 text-gray-600">{{ a.dealsClosed }}</td>
+              <td class="px-6 py-3.5 text-green-600 font-medium">₹{{ a.revenue | number }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <!-- Fallback for viewer / no permissions -->
+  @if (!summary() && agentPerf().length === 0) {
+    <div class="bg-white rounded-xl p-16 shadow-sm border border-gray-100 text-center">
+      <div class="w-16 h-16 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+        </svg>
+      </div>
+      <p class="text-gray-700 font-medium">Welcome, {{ role }}</p>
+      <p class="text-gray-400 text-sm mt-1">Use the sidebar to navigate to your modules.</p>
+    </div>
+  }
+
+</div>
